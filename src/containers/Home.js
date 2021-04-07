@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { API } from "aws-amplify";
 import { Link } from "react-router-dom";
-import { BsPencilSquare } from "react-icons/bs";
+import { BsPencilSquare, BsSearch } from "react-icons/bs";
 import ListGroup from "react-bootstrap/ListGroup";
 import Spinner from 'react-bootstrap/Spinner';
+import InputGroup from 'react-bootstrap/InputGroup';
+import FormControl from 'react-bootstrap/FormControl';
 import { LinkContainer } from "react-router-bootstrap";
 import { useAppContext } from "../libs/contextLib";
 import { onError } from "../libs/errorLib";
@@ -11,6 +13,7 @@ import "./Home.css";
 
 export default function Home() {
   const [notes, setNotes] = useState([]);
+  const [filteredNotes, setFilteredNotes] = useState([]);
   const { isAuthenticated } = useAppContext();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,6 +26,7 @@ export default function Home() {
       try {
         const notes = await loadNotes();
         setNotes(notes);
+        setFilteredNotes(notes);
       } catch (e) {
         onError(e);
       }
@@ -32,6 +36,21 @@ export default function Home() {
 
     onLoad();
   }, [isAuthenticated]);
+
+  function setSearch(event) {
+    const searchTerm = event.target.value;
+
+    // If nothing is enetered in the search box, reset the filter
+    if (!searchTerm) {
+      setFilteredNotes(notes);
+      return;
+    }
+
+    // Use simple client side filter 
+    // Could add a debounce here if performace is an issue
+    setFilteredNotes(notes.filter(({ content }) => content.indexOf(searchTerm) > -1))
+
+  }
 
   function loadNotes() {
     return API.get("notes", "/notes");
@@ -100,7 +119,18 @@ export default function Home() {
     return (
       <div className="notes">
         <h2 className="pb-3 mt-4 mb-3 border-bottom">Your Notes</h2>
-        <ListGroup>{renderNotesList(notes)}</ListGroup>
+        <InputGroup className="mb-3">
+          <InputGroup.Prepend>
+            <InputGroup.Text id="search-mag"><BsSearch /></InputGroup.Text>
+          </InputGroup.Prepend>
+          <FormControl
+            placeholder="Search your notes..."
+            aria-label="Search"
+            aria-describedby="search-mag"
+            onChange={setSearch}
+          />
+        </InputGroup>
+        <ListGroup>{renderNotesList(filteredNotes)}</ListGroup>
       </div>
     );
   }
