@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { API } from "aws-amplify";
 import { Link } from "react-router-dom";
-import { BsPencilSquare, BsSearch } from "react-icons/bs";
+import { BsPencilSquare, BsSearch, BsArrowUpDown } from "react-icons/bs";
 import ListGroup from "react-bootstrap/ListGroup";
 import Spinner from 'react-bootstrap/Spinner';
 import InputGroup from 'react-bootstrap/InputGroup';
 import FormControl from 'react-bootstrap/FormControl';
+import Button from 'react-bootstrap/Button';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Tooltip from 'react-bootstrap/Tooltip';
 import { LinkContainer } from "react-router-bootstrap";
 import { useAppContext } from "../libs/contextLib";
 import { onError } from "../libs/errorLib";
@@ -14,8 +17,12 @@ import "./Home.css";
 export default function Home() {
   const [notes, setNotes] = useState([]);
   const [filteredNotes, setFilteredNotes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState(null);
+  const [replaceTerm, setReplaceTerm] = useState(null);
   const { isAuthenticated } = useAppContext();
   const [isLoading, setIsLoading] = useState(true);
+
+  const showReplace = searchTerm && filteredNotes.length > 0 // Only show the replace field if there are valid notes to replace things with
 
   useEffect(() => {
     async function onLoad() {
@@ -39,6 +46,7 @@ export default function Home() {
 
   function setSearch(event) {
     const searchTerm = event.target.value;
+    setSearchTerm(event.target.value);
 
     // If nothing is enetered in the search box, reset the filter
     if (!searchTerm) {
@@ -84,7 +92,7 @@ export default function Home() {
             <LinkContainer key={noteId} to={`/notes/${noteId}`}>
               <ListGroup.Item action>
                 <span className="font-weight-bold">
-                  {content.trim().split("\n")[0]}
+                  {showReplace ? <SearchAndReplaceText text={content} searchTerm={searchTerm} replaceTerm={replaceTerm} /> : content.trim().split("\n")[0]}
                 </span>
                 <br />
                 <span className="text-muted">
@@ -130,6 +138,24 @@ export default function Home() {
             onChange={setSearch}
           />
         </InputGroup>
+        {showReplace &&
+          <InputGroup className="mb-3">
+            <InputGroup.Prepend>
+              <OverlayTrigger
+                placement='bottom'
+                overlay={<Tooltip>Replace</Tooltip>}
+              >
+                <Button id="search-replace"><BsArrowUpDown /></Button>
+              </OverlayTrigger>
+            </InputGroup.Prepend>
+            <FormControl
+              placeholder={`Replace "${searchTerm}" with...`}
+              aria-label="Replace"
+              aria-describedby="search-replace"
+              onChange={event => setReplaceTerm(event.target.value)}
+            />
+          </InputGroup>
+        }
         <ListGroup>{renderNotesList(filteredNotes)}</ListGroup>
       </div>
     );
@@ -139,5 +165,29 @@ export default function Home() {
     <div className="Home">
       {isAuthenticated ? renderNotes() : renderLander()}
     </div>
+  );
+}
+
+/**
+ * Create a React Fragment that has the original text
+ * replaced with a strikout and the new text next to it
+ */
+function SearchAndReplaceText({ text, searchTerm, replaceTerm }) {
+  const searchTermHighlight = replaceTerm ? <del>{searchTerm}</del> : <mark>{searchTerm}</mark>
+  const replaceTermHighlight = replaceTerm ? <mark>{replaceTerm}</mark> : null
+
+  return (
+    <>{text.split("\n").map(line => // Split text into paragrapghs to render the full note on the screen and not just the first line
+      <p>
+        {line.split(searchTerm).map((text, index, array) => // Split the line by the search term in order to highlight the search term
+          <>
+            {text}
+            {index < array.length - 1 && searchTermHighlight /* Don't reinsert the search term on the last split, otherwise insert it with a highlight*/}
+            {index < array.length - 1 && replaceTermHighlight /* Don't reinsert the replace term on the last split*/}
+          </>
+        )}
+      </p>
+    )}
+    </>
   );
 }
