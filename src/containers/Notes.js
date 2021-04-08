@@ -42,7 +42,7 @@ export default function Notes() {
   }, [id]);
 
   function validateForm() {
-    return content.length > 0;
+    return (content || '').length > 0;
   }
 
   function formatFilename(str) {
@@ -67,7 +67,7 @@ export default function Notes() {
     if (file.current && file.current.size > config.MAX_ATTACHMENT_SIZE) {
       alert(
         `Please pick a file smaller than ${
-          config.MAX_ATTACHMENT_SIZE / 1000000
+        config.MAX_ATTACHMENT_SIZE / 1000000
         } MB.`
       );
       return;
