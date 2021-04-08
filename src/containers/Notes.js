@@ -119,50 +119,50 @@ export default function Notes() {
 
   return (
     <div className="Notes">
-      {note && (
-        <Form onSubmit={handleSubmit}>
-          <Form.Group controlId="content">
-            <Form.Control
-              as="textarea"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-          </Form.Group>
-          <Form.Group controlId="file">
-            <Form.Label>Attachment</Form.Label>
-            {note.attachment && (
-              <p>
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={note.attachmentURL}
-                >
-                  {formatFilename(note.attachment)}
-                </a>
-              </p>
-            )}
-            <Form.Control onChange={handleFileChange} type="file" />
-          </Form.Group>
-          <LoaderButton
-            block
-            size="lg"
-            type="submit"
-            isLoading={isLoading}
-            disabled={!validateForm()}
-          >
-            Save
+      <Form onSubmit={handleSubmit}>
+        <Form.Group controlId="content">
+          <Form.Control
+            as="textarea"
+            value={content}
+            placeholder={note ? null : 'Loading...' /* If note is not loaded, show the word "Loading...". This is better than a full screen loading indicator as the user gets more context faster */}
+            readOnly={!note /* If note is not loaded, prevent writes in the textfield */}
+            onChange={(e) => setContent(e.target.value)}
+          />
+        </Form.Group>
+        <Form.Group controlId="file">
+          <Form.Label>Attachment</Form.Label>
+          {note && note.attachment && (
+            <p>
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={note.attachmentURL}
+              >
+                {formatFilename(note.attachment)}
+              </a>
+            </p>
+          )}
+          <Form.Control onChange={handleFileChange} type="file" />
+        </Form.Group>
+        <LoaderButton
+          block
+          size="lg"
+          type="submit"
+          isLoading={isLoading}
+          disabled={!validateForm()}
+        >
+          Save
           </LoaderButton>
-          <LoaderButton
-            block
-            size="lg"
-            variant="danger"
-            onClick={handleDelete}
-            isLoading={isDeleting}
-          >
-            Delete
+        <LoaderButton
+          block
+          size="lg"
+          variant="danger"
+          onClick={handleDelete}
+          isLoading={isDeleting}
+        >
+          Delete
           </LoaderButton>
-        </Form>
-      )}
+      </Form>
     </div>
   );
 }
